@@ -29,10 +29,6 @@
     </div>
   </div>
   <div id="snackbar">...</div>
-  <div style="height: 0px">
-    <img src="like.png" width="0"/>
-    <img src="dislike.png" width="0" />
-  </div>
 
   <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxEG_hnKjPH9rCuI-M_5mbXqK75teze07X2aFRLdo7upFF2P7FmQD-6jVC1FyYC4UnDlw/exec'
@@ -40,6 +36,11 @@
     const loading = document.querySelector('.js-loading')
     const successMessage = document.querySelector('.js-success-message')
     const errorMessage = document.querySelector('.js-error-message')
+
+    form.addEventListener('submit', e => {
+      e.preventDefault()
+      btnSubmit()
+    })
   
     function btnSubmit() {
       if(form.reportValidity()) {
