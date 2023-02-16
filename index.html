@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Survey</title>
+  <meta name="description" content="Store HTML form submissions in Google Sheets">
+  <link href="./favicon.png" rel="shortcut icon">
+
+  <link rel="stylesheet" href="main.css">
+  <!-- <script src="https://unpkg.com/prefixfree@1.0.0/prefixfree.min.js"></script> -->
+
+  <!-- <script src="https://raw.githubusercontent.com/jimmywarting/FormData/master/formdata.min.js"></script>
+  <script src="https://raw.githubusercontent.com/taylorhakes/promise-polyfill/master/dist/polyfill.min.js"></script>
+  <script src="https://raw.githubusercontent.com/github/fetch/master/fetch.js"></script> -->
+</head>
+<body>
+
+  <div class="form-container form-container-width">
+    <form name="submit-to-google-sheet">
+      <div class="step1">
+        <div class="description">
+          <p>Anh/chị cung cấp một số thông tin sau:</p>
+        </div>
+        <div class="title">Phòng Ban</div>
+        <input class="input" id="Phong_Ban" name="Phong_Ban" type="text" placeholder="Nhập phòng ban" required>
+        <div class="title">Khối</div>
+        <select class="input" name="Khoi" id="Khoi">
+          <option value="">Chọn Khối</option>
+          <option value="IT">IT</option>
+          <option value="RB">RB</option>
+          <option value="SME">SME</option>
+        </select>
+
+        <button type="button" onclick="return btnNext();">Tiếp tục</button>
+      </div>
+      <div class="step2 is-hidden">
+        <div class="description">
+          <p>Anh/chị hãy chọn GTCL mà anh/chị thấy chính xác nhất</p>
+        </div>
+        <div class="title">1. Khách hàng là trọng tâm</div>
+        <div class="cc-selector">
+            <input id="OPTION1_1" type="radio" name="C1" value="AGREE" required />
+            <label class="drinkcard-cc like" for="OPTION1_1"></label>
+
+            <input id="OPTION2_1" type="radio" name="C1" value="DISAGREE" />
+            <label class="drinkcard-cc dislike" for="OPTION2_1"></label>
+        </div>
+        <div class="title">2. Hiệu quả</div>
+        <div class="cc-selector">
+            <input id="OPTION1_2" type="radio" name="C2" value="AGREE" required />
+            <label class="drinkcard-cc like" for="OPTION1_2"></label>
+
+            <input id="OPTION2_2" type="radio" name="C2" value="DISAGREE" />
+            <label class="drinkcard-cc dislike" for="OPTION2_2"></label>
+        </div>
+        <div class="title">3. Tham vọng</div>
+        <div class="cc-selector">
+            <input id="OPTION1_3" type="radio" name="C3" value="AGREE" required />
+            <label class="drinkcard-cc like" for="OPTION1_3"></label>
+
+            <input id="OPTION2_3" type="radio" name="C3" value="DISAGREE" />
+            <label class="drinkcard-cc dislike" for="OPTION2_3"></label>
+        </div>
+        <div class="title">4. Phát triển con người</div>
+        <div class="cc-selector">
+            <input id="OPTION1_4" type="radio" name="C4" value="AGREE" required />
+            <label class="drinkcard-cc like" for="OPTION1_4"></label>
+
+            <input id="OPTION2_4" type="radio" name="C4" value="DISAGREE" />
+            <label class="drinkcard-cc dislike" for="OPTION2_4"></label>
+        </div>
+        <div class="title">5. Tin cậy</div>
+        <div class="cc-selector">
+            <input id="OPTION1_5" type="radio" name="C5" value="AGREE" required />
+            <label class="drinkcard-cc like" for="OPTION1_5"></label>
+
+            <input id="OPTION2_5" type="radio" name="C5" value="DISAGREE" />
+            <label class="drinkcard-cc dislike" for="OPTION2_5"></label>
+        </div>
+        <div class="title">6. Tạo sự khác biệt</div>
+        <div class="cc-selector">
+            <input id="OPTION1_6" type="radio" name="C6" value="AGREE" required />
+            <label class="drinkcard-cc like" for="OPTION1_6"></label>
+
+            <input id="OPTION2_6" type="radio" name="C6" value="DISAGREE" />
+            <label class="drinkcard-cc dislike" for="OPTION2_6"></label>
+        </div>
+        <button type="button" onclick="btnSubmit()">VOTE</button>
+      </div>
+    </form>
+    <div class="loading js-loading is-hidden">
+      <div class="loading-spinner">
+        <svg><circle cx="25" cy="25" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"/></svg>
+      </div>
+    </div>
+
+    <div class="js-success-message is-hidden">
+      Cảm ơn bạn đã tham gia khảo sát!<br/>
+      <button type="button" onclick="btnBack()">Trở Về</button>
+    </div>
+    <div class="js-error-message is-hidden">
+      Có lỗi trong quá trình xử lý. Vui lòng thử lại sau!<br/>
+      <button type="button" onclick="btnRetry()">Thử lại</button>
+    </div>
+  </div>
+  <div id="snackbar">...</div>
+
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxFiQ8pQkdpWwKD-xUjfkTWhhHxNYLMhfNU1e1zlaMecU13lHMKqLB535weKmBxHBiD3g/exec'
+    const form = document.forms['submit-to-google-sheet']
+    const loading = document.querySelector('.js-loading')
+    const successMessage = document.querySelector('.js-success-message')
+    const errorMessage = document.querySelector('.js-error-message')
+    const step1 = document.querySelector('.step1')
+    const step2 = document.querySelector('.step2')
+
+    function getFormDataAsJson() {
+      var formData = new FormData(form)
+      var object = {};
+      formData.forEach(function(value, key){
+          object[key] = value;
+      });
+      return object;
+    }
+
+    function btnSubmit() {
+      if(form.reportValidity()) {
+        showLoadingIndicator()
+        var data = getFormDataAsJson()
+        var json = JSON.stringify(data)
+        console.log(json)
+        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+          .then(response => showSuccessMessage(response))
+          .catch(error => showErrorMessage(error))
+      } else {
+        showSnackbar("Vui lòng trả lời tất cả các câu hỏi")
+      }
+    }
+
+    function btnNext() {
+      var p = document.getElementById("Phong_Ban").value;
+      var k = document.getElementById("Khoi").value;
+      if(p==undefined || p=="") {
+        showSnackbar("Vui lòng nhập thông tin phòng ban")
+        return;
+      }
+      if(k==undefined || k=="") {
+        showSnackbar("Vui lòng chọn khối của bạn")
+        return;
+      }
+      step1.classList.add('is-hidden')
+      step2.classList.remove('is-hidden')
+      return
+    }
+
+    function btnBack() {
+      window.location.href = "./v1.html?back=true"
+    }
+
+    function btnRetry() {
+      window.location.href = "./v1.html"
+    }
+
+    function showLoadingIndicator () {
+      form.classList.add('is-hidden')
+      loading.classList.remove('is-hidden')
+    }
+
+    async function showSuccessMessage (response) {
+      var data = await response.json()
+      console.log('Success!', data)
+      setTimeout(() => {
+        successMessage.classList.remove('is-hidden')
+        loading.classList.add('is-hidden')
+      }, 500)
+    }
+
+    function showErrorMessage (error) {
+      console.error('Error!', error.message)
+      setTimeout(() => {
+        errorMessage.classList.remove('is-hidden')
+        loading.classList.add('is-hidden')
+      }, 500)
+    }
+
+    function showSnackbar(msg) {
+      var x = document.getElementById("snackbar");
+      x.innerHTML = msg
+      x.className = "show";
+      setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+    }
+  </script>
+
+</body>
+</html>
