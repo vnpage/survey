@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Free Chat GPT</title>
+  <meta name="description" content="Store HTML form submissions in Google Sheets">
+  <link href="./favicon.png" rel="shortcut icon">
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+  <div class="form-container form-container-width">
+    <form name="submit-to-google-sheet">
+        <div class="description">
+          <p>Sử dụng Chat GPT miễn phí</p>
+        </div>
+        <input class="input" id="cauhoi" name="cauhoi" type="text" placeholder="Nhập câu hỏi..." required>
+        <button type="button" onclick="btnSubmit()">SEND</button>
+    </form>
+    <div class="loading js-loading is-hidden">
+      <div class="loading-spinner" style="margin-top: 240px">
+        <svg><circle cx="25" cy="25" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"/></svg>
+      </div>
+    </div>
+
+    <div id="result" class="js-success-message is-hidden" style="margin-top: 40px;"><br/>
+    </div>
+  </div>
+  <div id="snackbar">...</div>
+  <div style="height: 0px">
+    <img src="like.png" width="0"/>
+    <img src="dislike.png" width="0" />
+  </div>
+
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxEG_hnKjPH9rCuI-M_5mbXqK75teze07X2aFRLdo7upFF2P7FmQD-6jVC1FyYC4UnDlw/exec'
+    const form = document.forms['submit-to-google-sheet']
+    const loading = document.querySelector('.js-loading')
+    const successMessage = document.querySelector('.js-success-message')
+    const errorMessage = document.querySelector('.js-error-message')
+  
+    function btnSubmit() {
+      if(form.reportValidity()) {
+        showLoadingIndicator()
+        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+          .then(response => showSuccessMessage(response))
+          .catch(error => showErrorMessage(error))
+      } else {
+        showSnackbar("Vui lòng nhập câu hỏi")
+      }
+    }
+
+    function btnRetry() {
+      window.location.href = "./gpt.html"
+    }
+
+    function showLoadingIndicator () {
+      // form.classList.add('is-hidden')
+      loading.classList.remove('is-hidden')
+    }
+
+    async function showSuccessMessage (response) {
+      var data = await response.json()
+      console.log('Success!', data)
+      var x = document.getElementById("result");
+      x.innerHTML = data?.result.replace(/\n/g, "<br/>") ?? "Không có kết quả"
+      setTimeout(() => {
+        successMessage.classList.remove('is-hidden')
+        loading.classList.add('is-hidden')
+      }, 500)
+    }
+
+    function showErrorMessage (error) {
+      console.error('Error!', error.message)
+      setTimeout(() => {
+        errorMessage.classList.remove('is-hidden')
+        loading.classList.add('is-hidden')
+      }, 500)
+    }
+
+    function showSnackbar(msg) {
+      var x = document.getElementById("snackbar");
+      x.innerHTML = msg
+      x.className = "show";
+      setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+    }
+  </script>
+
+</body>
+</html>
